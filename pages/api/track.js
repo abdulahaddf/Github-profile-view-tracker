@@ -9,6 +9,8 @@ const PIXEL = Buffer.from(
 export default async function handler(req, res) {
   const { user } = req.query;
 
+  console.log("[TRACK] Request received:", { user, method: req.method });
+
   if (!user) {
     res.status(400).end("Missing user");
     return;
@@ -19,6 +21,8 @@ export default async function handler(req, res) {
     .toLowerCase()
     .replace(/[^a-z0-9_-]/g, "")
     .slice(0, 39);
+
+  console.log("[TRACK] Processing for username:", username);
 
   // --- Parse visitor metadata ---
   const ip =
@@ -69,16 +73,19 @@ export default async function handler(req, res) {
     // Store visit in a Redis sorted set (score = timestamp for range queries)
     // Key pattern: visits:{username}
     const key = `visits:${username}`;
+    console.log("[TRACK] Storing visit to Redis key:", key);
     await redis.zadd(key, { score: visit.ts, member: JSON.stringify(visit) });
+    console.log("[TRACK] Visit stored successfully");
 
     // Keep only last 5000 entries per user (prune oldest)
     await redis.zremrangebyrank(key, 0, -5001);
 
     // Increment total counter
     await redis.incr(`total:${username}`);
+    console.log("[TRACK] Counter incremented for:", username);
   } catch (err) {
     // Silently fail — never break the image response
-    console.error("Redis error:", err.message);
+    console.error("[TRACK] Redis error:", err.message, err);
   }
 
   // Always respond with the transparent pixel

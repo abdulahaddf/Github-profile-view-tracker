@@ -51,6 +51,43 @@ export default function Home() {
     }
   };
 
+  const testTrack = async () => {
+    if (!currentUser) {
+      alert("Please enter a username first");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `/api/test-track?username=${encodeURIComponent(currentUser)}`
+      );
+      const data = await response.json();
+      alert(
+        "Track test:\n" +
+          JSON.stringify(data, null, 2)
+      );
+      // Reload stats after a short delay
+      setTimeout(() => loadStats(currentUser, currentWindow), 1000);
+    } catch (err) {
+      alert("Track test failed: " + err.message);
+    }
+  };
+
+  const debugRedis = async () => {
+    if (!currentUser) {
+      alert("Please enter a username first");
+      return;
+    }
+    try {
+      const response = await fetch(
+        `/api/debug?user=${encodeURIComponent(currentUser)}`
+      );
+      const data = await response.json();
+      alert("Redis Debug Info:\n" + JSON.stringify(data, null, 2));
+    } catch (err) {
+      alert("Debug failed: " + err.message);
+    }
+  };
+
   if (!mounted) return null;
 
   return (
@@ -130,6 +167,8 @@ export default function Home() {
         }
         .btn-primary { background: rgba(56,189,248,.1); color: var(--accent); border: 1px solid rgba(56,189,248,.2); }
         .btn-primary:hover { background: rgba(56,189,248,.2); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
         .btn-lg { padding: 10px 28px; font-size: 13px; border-radius: 10px; white-space: nowrap; }
 
         #empty { text-align: center; padding: 100px 0; }
@@ -251,6 +290,25 @@ export default function Home() {
             View Stats →
           </button>
         </div>
+
+        {currentUser && (
+          <div style={{ marginBottom: "20px", display: "flex", gap: "10px" }}>
+            <button
+              className="btn btn-ghost"
+              onClick={testTrack}
+              style={{ fontSize: "11px", padding: "6px 12px" }}
+            >
+              🧪 Simulate Track
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={debugRedis}
+              style={{ fontSize: "11px", padding: "6px 12px" }}
+            >
+              🔍 Debug Redis
+            </button>
+          </div>
+        )}
 
         {!currentUser ? (
           <div id="empty">
